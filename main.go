@@ -100,9 +100,14 @@ func main() {
 
 	r.Handle("/", http.FileServer(http.Dir("./static")))
 
+	port := os.Getenv("PORT") 
+	if port == "" {
+		 port = "8080"
+	}
+
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         ":8080",
+		Addr:         ":" + port,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -121,7 +126,7 @@ func main() {
 
 	// Start Server
 	go func() {
-		log.Println(`Starting Server: http:\\localhost:8080`)
+		log.Println(`Starting Server: http:\\localhost:` + port)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 //			panic(err)
