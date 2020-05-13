@@ -60,6 +60,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// remove os caracteres inválidos do processo
 	reg, _ := regexp.Compile("[^" + alphabet + "]+")
 	changedString := reg.ReplaceAllString(original, "") 
+	log.Printf("changedString: %s", changedString)
 
 	//determina de acordo com o alfabeto
 	radix := 10
@@ -72,6 +73,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		radix = 62   
 	default:
 		radix = 62   
+	}
+
+	if ( len(changedString ) <= 2) {
+	  log.Printf("Quantidade de caracteres pertencentes ao alfabeto é muito pequena: %d", len(changedString))
+	  fmt.Fprintf(w, "Quantidade de caracteres pertencentes ao alfabeto é muito pequena: %d", len(changedString))
+		return 
 	}
 
 	// Key and tweak should be byte arrays. Put your key and tweak here.
@@ -110,7 +117,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
   if ( len(changedString) != len(original) ){
 		for i, ch := range original {
-			if ( rune(changedString[i]) != ch ){
+			if ( i >= len(changedString) ){
+				changedString = changedString + string(ch)
+				ciphertext = ciphertext + string(ch)
+				plaintext = plaintext + string(ch)
+			} else if ( rune(changedString[i]) != ch ){
 				changedString = changedString[:i] + string(ch) + changedString[i:]
 				ciphertext = ciphertext[:i] + string(ch) + ciphertext[i:]
 				plaintext = plaintext[:i] + string(ch) + plaintext[i:]
