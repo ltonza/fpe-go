@@ -24,7 +24,7 @@ func RequestLogger(targetMux http.Handler) http.Handler {
 					targetMux.ServeHTTP(w, r)
 
 					log.Printf(
-									"%s %s \t%d",
+									"%s %s \t%v",
 									r.Method,
 									r.RequestURI,
 									time.Since(start),
