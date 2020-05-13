@@ -5,13 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Format Preserving Encryption</title>
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico">
 </head>
 <body>
-  <form action="fpe" method="get" target="resultado">
-    <div>
-      <label for="plain">Nome, CPF, cartão, etc:</label>
+  <form action="fpe" method="post" target="resultado">
+    <div style="display: inline-block; padding: 5px;">
+      <label for="plain" style="display: block;" >Nome, CPF, cartão, etc:</label>
       <input type="text" id="plain" name="plain" value="" size=500 style="width:400px;" />
+    </div>
+    <div style="display: inline-block; padding: 5px;">
+      <label for="alphabet" style="display: block" >Alfabeto:</label>
+      <select id="alphabet" name="alphabet">
+        <option value="0-9" selected>0-9</option>
+        <option value="0-9a-z">0-9a-z</option>
+        <option value="0-9a-zA-Z">0-9a-zA-Z</option>
+      </select>
+    </div>
+    <div style="display: inline-block; padding: 5px;">
       <input type="submit" value="enviar" />
+    </div>
+    <div style="display: block; padding: 5px; width: 600px;">
+      <b>Observações:</b><br/>
+      - os caracteres que não fizerem parte do Alfabeto selecionado não serão criptografados.<br/>
+      - se o Alfabeto selecionado for alfanumérico, o dado criptografado poderá ter caracteres desse alfabeto, mesmo que o texto de entrada seja somente numérico ( p/ex.: CPF ).<br/>
     </div>
   </form>
    

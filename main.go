@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 	"encoding/hex"
-	"math/big"
 	"regexp"
 
 	"github.com/capitalone/fpe/ff1"
@@ -18,28 +17,61 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	var numX big.Int
-	var ok bool
+func RequestLogger(targetMux http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					start := time.Now()
 
-	query := r.URL.Query()
-	original := query.Get("plain")
+					targetMux.ServeHTTP(w, r)
+
+					log.Printf(
+									"%s %s \t%d",
+									r.Method,
+									r.RequestURI,
+									time.Since(start),
+					)
+	})
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	original := ""
+  alphabet := "0-9"
+	switch r.Method {
+	case "GET":     
+  	query := r.URL.Query()
+		log.Printf("query parameters = %v\n", query)
+		original = query.Get("plain")
+		alphabet = query.Get("alphabet")
+  case "POST":
+    // Call ParseForm() to parse the raw query and update r.PostForm and r.Form.
+    if err := r.ParseForm(); err != nil {
+        fmt.Fprintf(w, "ParseForm() err: %v", err)
+        return
+		}
+		log.Printf("form values = %v\n", r.PostForm)
+		original = r.FormValue("plain")
+		alphabet = r.FormValue("alphabet")
+	}
+
 	if original == "" {
 		w.Write([]byte("Informe o texto..."))
 		return 
 	}
-	log.Printf("Received request for %s\n", original)
 
 	// remove os caracteres inválidos do processo
-	reg, _ := regexp.Compile("[^A-Za-z0-9]+")
+	reg, _ := regexp.Compile("[^" + alphabet + "]+")
 	changedString := reg.ReplaceAllString(original, "") 
 
 	//determina de acordo com o alfabeto
 	radix := 10
-
-	_, ok = numX.SetString(changedString, radix)
-	if !ok {
-	  radix = 62
+  switch alphabet {
+	case "0-9":
+		radix = 10   
+	case "0-9a-z":
+		radix = 36   
+	case "0-9a-zA-Z":
+		radix = 62   
+	default:
+		radix = 62   
 	}
 
 	// Key and tweak should be byte arrays. Put your key and tweak here.
@@ -86,6 +118,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	  }
 	}
 
+	w.Write([]byte(fmt.Sprintf("Alphabet..: \t%s\n", alphabet)))
 	w.Write([]byte(fmt.Sprintf("Original..: \t%s\n", original)))
 	w.Write([]byte(fmt.Sprintf("Ciphered..: \t%s\n", ciphertext)))
 	w.Write([]byte(fmt.Sprintf("Deciphered: \t%s\n", plaintext)))
@@ -98,7 +131,7 @@ func main() {
 
 	r.HandleFunc("/fpe", handler)
 
-	r.Handle("/", http.FileServer(http.Dir("./static")))
+	r.PathPrefix("/").Handler(http.StripPrefix("/",http.FileServer(http.Dir("./static"))))
 
 	port := os.Getenv("PORT") 
 	if port == "" {
@@ -106,7 +139,7 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      RequestLogger(r),
 		Addr:         ":" + port,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
